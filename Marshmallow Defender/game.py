@@ -1,5 +1,7 @@
 import pygame
 import sys
+import random
+from fsm import FSM
 
 class SimpleGame:
     WIDTH, HEIGHT = 600, 400
@@ -23,6 +25,10 @@ class SimpleGame:
         self.all_sprites = pygame.sprite.Group()
         self.all_sprites.add(self.player)
 
+        # Time tracking for marshmallow spawning
+        self.last_marshmallow_spawn_time = pygame.time.get_ticks()
+        self.marshmallow_spawn_delay = 500  # 1000 milliseconds (1 second)
+
     def run(self):
         # Main game loop
         running = True
@@ -31,6 +37,18 @@ class SimpleGame:
                 if event.type == pygame.QUIT:
                     running = False
 
+            # Fire
+            keys = pygame.key.get_pressed()
+            current_time = pygame.time.get_ticks()
+
+            if keys[pygame.K_SPACE] and current_time - self.last_marshmallow_spawn_time > self.marshmallow_spawn_delay:
+                self.marshmallow = Marshmallow(self.player.get_y())
+                self.all_sprites.add(self.marshmallow)
+                self.last_marshmallow_spawn_time = current_time
+            
+            for sprite in self.all_sprites.sprites():
+                if hasattr(sprite, 'remove_flag') and sprite.remove_flag:
+                    sprite.kill()
             # Update
             self.all_sprites.update()
 
@@ -63,12 +81,36 @@ class Player(pygame.sprite.Sprite):
             self.rect.y -= self.speed
         if keys[pygame.K_DOWN] and self.rect.bottom < SimpleGame.HEIGHT:
             self.rect.y += self.speed
+    def get_y(self):
+        return self.rect.y
 # My Code
 class Pedestrian(pygame.sprite.Sprite):
+    PASSIVE, MAD, SCARED = 0, 1, 2
+    IS_SHOT = "is"
+
     def __init__(self):
-        self.image = pygame.Surface(600, _) #use random int)
-        self.image.fill(SimpleGame.White) #make image of pedestrian
+        self.fsm = FSM(0)
+        super().__init__()
+        self.image = pygame.Surface((600, random.randint(20, 380))) #use random int)
+        self.image.fill(SimpleGame.WHITE) #make image of pedestrian
         self.speed = 5 #change to make pedestrians faster
+        self.is_shot = False
+        #initialise fsm with initial state
+        self.fsm.add_transition(self.IS_SHOT, self.PASSIVE, self.turn_mad, self.MAD)
+        self.fsm.add_transition(self.IS_SHOT, self.MAD, self.turn_scared, self.SCARED)
+
+    def turn_mad(self):
+        self.speed = 10
+        # Change image
+        self.is_shot = False
+
+    def turn_scared(self):
+        # Change image
+        self.speed = -10
+
+    def change_status():
+        self.is_shot = True
+
 
     def update(self):
         self.rect.x -= self.speed
@@ -76,12 +118,22 @@ class Pedestrian(pygame.sprite.Sprite):
     # add status when you reach player game ends
 
 class Marshmallow(pygame.sprite.Sprite):
-    def __init__(self, x):
-        self.image = pygame.Surface(50, x)
-        #add image in
+    def __init__(self, y):
+        super().__init__()
+        self.image = pygame.Surface((5, 5))
+        self.image.fill(SimpleGame.WHITE)
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (50, y + 10)
         self.speed = 20
+        self.remove_flag = False
     def update(self):
-        self.rect.x += self.speed
+        if (self.rect.x + self.speed <= 600):
+            self.rect.x += self.speed
+        else:
+            self.remove_flag = True
+    def get_status(self):
+        return self.remove_flag
+
 
     #add status when you reach the border or hit pedestrian delete sprite
 
