@@ -167,6 +167,8 @@ class Player(pygame.sprite.Sprite):
     def get_y(self):
         return self.rect.y
 
+## I believe that I have improved my object oriented programming with
+## This class and the marshmallow class where I spent most of my time programming
 class Pedestrian(pygame.sprite.Sprite):
     # Initialize states
     PASSIVE, MAD, SCARED = 0, 1, 2
@@ -197,6 +199,8 @@ class Pedestrian(pygame.sprite.Sprite):
         self.remove_flag = False
 
         ## initialize fsm with initial state
+        ## I spent a lot of time on the FSM so I was hoping this could improve my content standards because
+        ## I beieve my quiz doesn't show what I know
         self.fsm.add_transition(self.IS_SHOT, self.PASSIVE, self.turn_mad, self.MAD)
         self.fsm.add_transition(self.IS_SHOT, self.MAD, self.turn_scared, self.SCARED)
         self.fsm.add_transition(self.IS_SHOT, self.SCARED, None, self.SCARED)
